@@ -1,102 +1,102 @@
-$color-primary: hsl(0, 0%, 10%);
-$color-text: hsl(0, 0%, 20%);
-$color-subtext: hsl(0, 0%, 30%);
-$color-border: hsl(0, 0%, 85%);
-$color-box-background: mix($color-primary, white, 4%);
-$border-radius: 4px;
-$font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial,
-  sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+$color-cave-floor: #f4f5f7; // Light limestone/slate
+$color-cave-wall: #e5e7eb;
+$color-fire-glow: #f59e0b; // Bright amber
+$color-fire-dim: #d97706;
+$color-truth-white: #ffffff;
+$color-shadow: rgba(0, 0, 0, 0.05);
+$color-text: #374151; // High contrast charcoal
+$color-border: #e2e8f0;
+$border-radius: 12px;
+
+$font-family-serif: 'Libre Baskerville', 'Georgia', serif;
+$font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
 body {
-  box-sizing: content-box;
-  font-family: $font-family;
-  margin: 0 auto;
-  line-height: 1.7;
-  padding: 4vh 6vw;
-  overflow-x: hidden;
+  background-color: $color-cave-floor;
+  background-image: 
+    radial-gradient(circle at 50% -10%, rgba(245, 158, 11, 0.15) 0%, transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, $color-cave-floor 100%);
+  background-attachment: fixed;
   color: $color-text;
-  font-size: 1rem;
-  max-width: 63em;
-
-  @media (min-width: 820px) {
-    font-size: 1.2rem;
-  }
-}
-
-time {
-  display: block;
-  color: $color-subtext;
-  margin: 0.5em 0 1em;
-}
-
-footer {
-  margin: 2em 0;
-  font-size: 0.8em;
-  color: mix($color-text, white, 80%);
-  padding-top: 1em;
-}
-
-img {
-  max-width: 100%;
-  display: block;
+  font-family: $font-family-sans;
+  line-height: 1.8;
+  padding: 4vh 6vw;
   margin: 0 auto;
-  max-height: 75vh;
-  border-radius: $border-radius;
-}
+  max-width: 63em;
+  min-height: 100vh;
+  position: relative;
 
-blockquote {
-  padding: 1.5em;
-  margin: 0;
-  font-size: 0.88em;
-  background: $color-box-background;
-  border-radius: $border-radius;
-
-  p {
-    margin: 0;
+  &::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url("https://www.transparenttextures.com/patterns/white-wall.png");
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: -1;
   }
 }
 
-hr {
-  width: 100%;
-  border: 0;
-  height: 1px;
-  margin: 1.5em 0;
-  background: $color-border;
+h1, h2, h3, h4, h5, h6 {
+  color: #111827;
+  font-family: $font-family-serif;
+  letter-spacing: -0.02em;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  line-height: 1.3;
-  margin-bottom: 0;
-  padding-bottom: 0;
+h1 {
+  border-bottom: 3px solid $color-fire-glow;
+  padding-bottom: 0.3em;
+  margin-bottom: 1.5em;
+  display: inline-block;
+  font-weight: 700;
 }
 
 a {
-  transition: background 300ms;
-  padding: 0 0.1em;
+  color: #c2410c; // Deeper burnt orange for readability
   text-decoration: none;
-  border-bottom: 1px solid $color-border;
-  color: $color-primary;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(194, 65, 12, 0.2);
+  padding: 0 1px;
+
   &:hover {
-    color: black !important;
-    background: #fffaf1;
+    color: #9a3412 !important;
+    background: rgba(245, 158, 11, 0.1);
+    border-bottom: 1px solid #c2410c;
   }
-  &:after {
-    position: relative;
-    top: -0.5em;
-    font-size: 0.7em;
-    content: "↗";
-    color: #aaaaaa;
+
+  &.internal-link {
+    background: rgba(245, 158, 11, 0.05);
+    border-bottom: 1px dashed rgba(194, 65, 12, 0.4);
+    &:hover {
+      background: rgba(245, 158, 11, 0.15);
+    }
   }
-  &.internal-link:after,
-  &.footnote:after,
-  &.reversefootnote:after {
-    content: "";
-  }
+}
+
+blockquote {
+  border-left: 5px solid $color-fire-glow;
+  background: white;
+  padding: 1.5em 2em;
+  margin: 2.5em 0;
+  border-radius: $border-radius;
+  box-shadow: 0 4px 6px $color-shadow;
+  font-style: italic;
+  color: #4b5563;
+}
+
+hr {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, $color-border, transparent);
+  margin: 3em 0;
+}
+
+footer {
+  margin-top: 5em;
+  padding-top: 2em;
+  border-top: 1px solid $color-border;
+  color: #6b7280;
+  font-size: 0.9em;
 }
 
 *:focus {
@@ -122,22 +122,52 @@ nav {
 }
 
 .backlink-box {
-  background: $color-box-background;
-  padding: 1em;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1.5em;
   border-radius: $border-radius;
+  border: 1px solid $color-border;
+  margin-top: 2em;
+
+  h3 {
+    margin-top: 0;
+    font-size: 1.1em;
+    color: $color-fire-dim;
+  }
 }
 
 code {
-  background: #f5f5f5;
-  padding: 0.1em 0.2em;
+  background: #1e1e24;
+  color: #fbbf24;
+  padding: 0.2em 0.4em;
   border-radius: 4px;
+  font-size: 0.9em;
+  border: 1px solid rgba(251, 191, 36, 0.1);
+}
+
+pre {
+  background: #0d0d0f;
+  padding: 1.5em;
+  border-radius: $border-radius;
+  border: 1px solid $color-border;
+  overflow-x: auto;
 }
 
 .invalid-link {
-  color: #444444;
-  cursor: help;
-  background: #fafafa;
-  padding: 0 0.1em;
+  color: #6b7280;
+  border-bottom: 1px dotted #4b5563;
+}
+
+// Allegory of the Cave special elements
+#cave-vignette {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 0%, transparent 40%, rgba(245, 158, 11, 0.03) 100%);
+  z-index: 1000;
+}
+
+.shadow-text {
+  filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
 }
 
 .invalid-link-brackets {

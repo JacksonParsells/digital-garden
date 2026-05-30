@@ -28,32 +28,34 @@ layout: default
       </div>
 
       <!-- Outbound Links (Rooms you can walk to from here) -->
-      <h3 style="margin-bottom: 0.5em">Where this room leads</h3>
+      <h3 style="margin-bottom: 0.5em">This room mentions:</h3>
       {% assign outbound_notes = site.notes | where_exp: "item", "page.content contains item.url" %}
       {% assign outbound_notes = outbound_notes | where_exp: "item", "item.url != page.url" %}
-
-      <select class="cave-dropdown" onchange="if (this.value) window.location.href=this.value"
-        style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; margin-bottom: 1.5em; font-family: inherit; font-size: 0.95em; color: #374151;">
-        <option value="">Choose a path...</option>
-        {% for link in outbound_notes %}
-        <option value="{{ site.baseurl }}{{ link.url }}{%- if site.use_html_extension -%}.html{%- endif -%}">{{
-          link.title }}</option>
-        {% endfor %}
-      </select>
+      {% if outbound_notes.size == 0 %}
+        <p style="color: #9ca3af; font-style: italic; margin: 0 0 1.5em 0;">this room mentions no others yet</p>
+      {% else %}
+        <select class="cave-dropdown" onchange="if (this.value) window.location.href=this.value"
+          style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; margin-bottom: 1.5em; font-family: inherit; font-size: 0.95em; color: #374151;">
+          <option value="">Choose a room...</option>
+          {% for link in outbound_notes %}
+            <option value="{{ site.baseurl }}{{ link.url }}{%- if site.use_html_extension -%}.html{%- endif -%}">{{ link.title }}</option>
+          {% endfor %}
+        </select>
+      {% endif %}
 
       <!-- Backlinks (Rooms that link to this one) -->
-      <h3 style="margin-bottom: 0.5em">Rooms that led here</h3>
-      <select class="cave-dropdown" onchange="if (this.value) window.location.href=this.value"
-        style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; font-family: inherit; font-size: 0.95em; color: #374151;">
-        <option value="">Choose a path...</option>
-        {% for backlink in page.backlinks %}
-        <option value="{{ site.baseurl }}{{ backlink.url }}{%- if site.use_html_extension -%}.html{%- endif -%}">{{
-          backlink.title }}</option>
-        {% endfor %}
-        {% if page.backlinks.size == 0 %}
-        <option disabled>No rooms lead here yet</option>
-        {% endif %}
-      </select>
+      <h3 style="margin-bottom: 0.5em">Rooms that mention this one:</h3>
+      {% if page.backlinks.size == 0 %}
+        <p style="color: #9ca3af; font-style: italic; margin: 0;">no rooms mention this one yet</p>
+      {% else %}
+        <select class="cave-dropdown" onchange="if (this.value) window.location.href=this.value"
+          style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; font-family: inherit; font-size: 0.95em; color: #374151;">
+          <option value="">Choose a room...</option>
+          {% for backlink in page.backlinks %}
+            <option value="{{ site.baseurl }}{{ backlink.url }}{%- if site.use_html_extension -%}.html{%- endif -%}">{{ backlink.title }}</option>
+          {% endfor %}
+        </select>
+      {% endif %}
 
       <style>
         .cave-dropdown:hover {

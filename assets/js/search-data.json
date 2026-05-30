@@ -1,0 +1,28 @@
+---
+permalink: /assets/js/search-data.json
+---
+[
+  {% assign first = true %}
+  {% for note in site.notes %}
+    {% unless first %},{% endunless %}
+    {
+      "title": {{ note.title | jsonify }},
+      "url": {{ site.baseurl | append: note.url | jsonify }},
+      "tags": {{ note.tags | jsonify }},
+      "content": {{ note.content | strip_html | strip_newlines | truncate: 180 | jsonify }}
+    }
+    {% assign first = false %}
+  {% endfor %}
+  {% for p in site.pages %}
+    {% if p.title and p.url != "/assets/js/search-data.json" %}
+      {% unless first %},{% endunless %}
+      {
+        "title": {{ p.title | jsonify }},
+        "url": {{ site.baseurl | append: p.url | jsonify }},
+        "tags": {{ p.tags | jsonify }},
+        "content": {{ p.content | strip_html | strip_newlines | truncate: 180 | jsonify }}
+      }
+      {% assign first = false %}
+    {% endif %}
+  {% endfor %}
+]

@@ -1,0 +1,18 @@
+current directory: /Users/jacksonparsells/Developer/digital-garden/vendor/bundle/ruby/3.3.0/gems/racc-1.8.1/ext/racc/cparse
+/Users/jacksonparsells/.rubies/ruby-3.3.4/bin/ruby extconf.rb
+creating Makefile
+
+current directory: /Users/jacksonparsells/Developer/digital-garden/vendor/bundle/ruby/3.3.0/gems/racc-1.8.1/ext/racc/cparse
+make DESTDIR\= sitearchdir\=./.gem.20260530-20488-6lckze sitelibdir\=./.gem.20260530-20488-6lckze clean
+
+current directory: /Users/jacksonparsells/Developer/digital-garden/vendor/bundle/ruby/3.3.0/gems/racc-1.8.1/ext/racc/cparse
+make DESTDIR\= sitearchdir\=./.gem.20260530-20488-6lckze sitelibdir\=./.gem.20260530-20488-6lckze
+compiling cparse.c
+linking shared-object racc/cparse.bundle
+
+current directory: /Users/jacksonparsells/Developer/digital-garden/vendor/bundle/ruby/3.3.0/gems/racc-1.8.1/ext/racc/cparse
+make DESTDIR\= sitearchdir\=./.gem.20260530-20488-6lckze sitelibdir\=./.gem.20260530-20488-6lckze install
+/usr/bin/install -c -m 0755 cparse.bundle ./.gem.20260530-20488-6lckze/racc
+
+current directory: /Users/jacksonparsells/Developer/digital-garden/vendor/bundle/ruby/3.3.0/gems/racc-1.8.1/ext/racc/cparse
+make DESTDIR\= sitearchdir\=./.gem.20260530-20488-6lckze sitelibdir\=./.gem.20260530-20488-6lckze clean

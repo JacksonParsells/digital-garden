@@ -7,7 +7,7 @@ permalink: /
 
 # Welcome to my cave!
 
-You can learn more about who I am and why I call it that in the masterfully written [about](#about) section.
+You can learn more about who I am and why I call it that in the masterfully written [about](about){:.internal-link} section.
 
 ---
 

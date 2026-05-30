@@ -1,0 +1,37 @@
+---
+---
+
+- Why my last blog failed
+- Video game series
+	- favorite games
+	- what you can learn from games
+	- regrets and joys of spending time on games
+	- studies into gaming and impact on socialization
+	- tie in "the anxious generation" here perhaps?
+- How I would raise a kid
+- 3/4 time is the best time signature, musical musings from a retired floutist
+- favorite words! very silly
+	- quixotic
+	- zemblanity
+	- zealot
+- Being a "sparky" person (JQ crush definition)
+- Movies I've watched and really liked + my thoughts on them
+	- eternal sunshine of the spotless mind
+- Books I've read and really liked + my thoughts on them
+	- anxious generation above
+	- the will of the many
+- CHILDISH GAMBINO AND BEACAIUSE THE INTERNET
+- Answering "what are your hobbies"
+- Why everyone thinks I am an extrovert
+	- "timer" on trips w/ Elliott and John
+- Moving forward past previous shame
+- Friendships + relationships that I struggle with and how I am coping with them
+- My relationship with listening to music
+- ADHD, anxiety, and depression
+	- ADHD is a terrible label these days [needs citation]
+	- First clinically diagnosed with anxiety
+		- ways I've coped, how recovered I feel, and when it flares
+		- it's kinda... fun
+	- ADHD -- a diagnosis I feared until adulthood
+		- relationship with sister
+		- different responsibilities and capabilities

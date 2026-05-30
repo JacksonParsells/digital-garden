@@ -19,50 +19,44 @@ layout: default
     </content>
 
     <side style="font-size: 0.9em">
+      <div id="side-map-container" style="margin-bottom: 2em; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white;">
+        <h3 style="margin: 0.5em 1em; font-size: 0.9em; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Cave Map</h3>
+        {% include notes_graph.html %}
+      </div>
+
       <!-- Outbound Links (Rooms you can walk to from here) -->
-      <h3 style="margin-bottom: 1em">Where this room leads</h3>
+      <h3 style="margin-bottom: 0.5em">Where this room leads</h3>
       {% assign outbound_notes = site.notes | where_exp: "item", "page.content contains item.url" %}
       {% assign outbound_notes = outbound_notes | where_exp: "item", "item.url != page.url" %}
-
-      {% if outbound_notes.size > 0 %}
-      <div style="display: grid; grid-gap: 1em; grid-template-columns: repeat(1fr);">
+      
+      <select class="cave-dropdown" onchange="if (this.value) window.location.href=this.value" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; margin-bottom: 1.5em; font-family: inherit; font-size: 0.95em; color: #374151;">
+        <option value="">Choose a path...</option>
         {% for link in outbound_notes %}
-        <div class="backlink-box">
-          <a class="internal-link"
-            href="{{ site.baseurl }}{{ link.url }}{%- if site.use_html_extension -%}.html{%- endif -%}">{{ link.title
-            }}</a><br>
-          <div style="font-size: 0.9em">{{ link.excerpt | strip_html | truncatewords: 10 }}</div>
-        </div>
+          <option value="{{ site.baseurl }}{{ link.url }}{%- if site.use_html_extension -%}.html{%- endif -%}">{{ link.title }}</option>
         {% endfor %}
-      </div>
-      {% else %}
-      <p style="font-size: 0.9em">This room seems to be a dead end...</p>
-      {% endif %}
-
-      <hr>
+      </select>
 
       <!-- Backlinks (Rooms that link to this one) -->
-      <h3 style="margin-bottom: 1em">Rooms that led here</h3>
-      {% if page.backlinks.size > 0 %}
-      <div style="display: grid; grid-gap: 1em; grid-template-columns: repeat(1fr);">
+      <h3 style="margin-bottom: 0.5em">Rooms that led here</h3>
+      <select class="cave-dropdown" onchange="if (this.value) window.location.href=this.value" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; font-family: inherit; font-size: 0.95em; color: #374151;">
+        <option value="">Choose a path...</option>
         {% for backlink in page.backlinks %}
-        <div class="backlink-box">
-          <a class="internal-link"
-            href="{{ site.baseurl }}{{ backlink.url }}{%- if site.use_html_extension -%}.html{%- endif -%}">{{
-            backlink.title }}</a><br>
-          <div style="font-size: 0.9em">{{ backlink.excerpt | strip_html | truncatewords: 10 }}</div>
-        </div>
+          <option value="{{ site.baseurl }}{{ backlink.url }}{%- if site.use_html_extension -%}.html{%- endif -%}">{{ backlink.title }}</option>
         {% endfor %}
-      </div>
-      {% else %}
-      <div style="font-size: 0.9em">
-        <p>No other rooms seem to know about this one yet.</p>
-      </div>
-      {% endif %}
+        {% if page.backlinks.size == 0 %}
+          <option disabled>No rooms lead here yet</option>
+        {% endif %}
+      </select>
+
+      <style>
+        .cave-dropdown:hover {
+          border-color: #f59e0b;
+        }
+        .cave-dropdown:focus {
+          outline: none;
+          box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+        }
+      </style>
     </side>
   </div>
 </article>
-
-<p>Here's the current map of the cave, have fun exploring</p>
-
-{% include notes_graph.html %}

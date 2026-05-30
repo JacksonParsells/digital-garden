@@ -28,14 +28,19 @@
   }
 
   #graph-wrapper {
-    background: #fcfcfc;
-    border-radius: 4px;
-    height: auto;
+    background: transparent;
+    height: 400px;
+    cursor: grab;
+  }
+
+  #graph-wrapper:active {
+    cursor: grabbing;
   }
   
   #graph-wrapper > svg {
     max-width: 100%;
     display: block;
+    border-radius: 12px;
   }
 </style>
 
@@ -55,7 +60,7 @@
         const MAX_NODE_SIZE = 12;
         const ACTIVE_RADIUS_FACTOR = 1.5;
         const STROKE = 1;
-        const FONT_SIZE = 16;
+        const FONT_SIZE = 12;
         const TICKS = 200;
         const FONT_BASELINE = 40;
         const MAX_LABEL_LENGTH = 50;
@@ -172,13 +177,15 @@
 
         const graphWrapper = document.getElementById('graph-wrapper')
         const element = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        element.setAttribute("width", graphWrapper.getBoundingClientRect().width);
-        element.setAttribute("height", window.innerHeight * 0.8);
+        const wrapperWidth = graphWrapper.getBoundingClientRect().width;
+        element.setAttribute("width", wrapperWidth);
+        element.setAttribute("height", 400);
         graphWrapper.appendChild(element);
 
         const reportWindowSize = () => {
-          element.setAttribute("width", window.innerWidth);
-          element.setAttribute("height", window.innerHeight);
+          const newWidth = graphWrapper.getBoundingClientRect().width;
+          element.setAttribute("width", newWidth);
+          element.setAttribute("height", 400);
         };
 
         window.onresize = reportWindowSize;

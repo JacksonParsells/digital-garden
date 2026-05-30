@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-  {% include head.html %}
-  <body>
-    <div id="cave-vignette"></div>
-    <nav>{% include nav.html %}</nav>
-    <div class="wrapper">
-      <main>{{ content }}</main>
-      <footer>{% include footer.html %}</footer>
-    </div>
+{% include head.html %}
 
-    {% include link-previews.html wrapperQuerySelector="content" %}
-  </body>
+<body>
+  <div id="cave-vignette"></div>
+  <nav>{% include nav.html %}</nav>
+  <div class="wrapper">
+    <main>{{ content }}</main>
+    <footer>{% include footer.html %}</footer>
+  </div>
+
+  {% include link-previews.html wrapperQuerySelector="content" %}
+</body>
+
 </html>

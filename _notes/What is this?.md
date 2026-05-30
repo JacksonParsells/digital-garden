@@ -1,5 +1,5 @@
 ---
-title: what is this?
+title: What is this?
 ---
 I've on and off journaled for the better part of 10 years, a practice that started at the behest of my therapist, and has continued because it immensely helps me organize and make sense of my thoughts.
 

@@ -7,7 +7,8 @@ permalink: /
 
 # Welcome to my cave!
 
-You can learn more about who I am and why I call it that in the masterfully written [about](about){:.internal-link} section.
+{% assign target_note = site.notes | where: "title", "What is this?" | first %}
+{{ target_note.content | markdownify }}
 
 ---
 

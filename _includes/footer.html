@@ -79,29 +79,19 @@
         document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('check_reminder')) {
-            const lastTrigger = localStorage.getItem(STORAGE_KEY);
-            if (lastTrigger) {
-            const cooldown = 24 * 60 * 60 * 1000;
-            const triggerTime = parseInt(lastTrigger); // store Date.now() directly, no math needed
-
             const firstNote = document.querySelector('.recent-note-item');
-            const latestModified = firstNote
-                ? parseInt(firstNote.getAttribute('data-timestamp')) * 1000
-                : 0;
-            const latestUrl = firstNote
-                ? firstNote.querySelector('a').getAttribute('href')
-                : null;
+            const latestUrl = firstNote ? firstNote.querySelector('a').getAttribute('href') : null;
 
-            console.log({ lastTrigger, triggerTime, latestModified, firstNote, latestUrl });
+            const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+            const noteDate = firstNote ? firstNote.querySelector('a').previousSibling.textContent.trim().slice(0, 10) : null;
 
-            if (latestModified > triggerTime) {
-                showToast("We've found a new room, check it out!", "success", latestUrl);
+            if (noteDate === today) {
+            showToast("We've found a new room, check it out!", "success", latestUrl);
             } else {
-                showToast("This guy's never going to make it out with indolence like this", "error");
+            showToast("This guy's never going to make it out with indolence like this", "error");
             }
 
             window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
-            }
         }
         });
 

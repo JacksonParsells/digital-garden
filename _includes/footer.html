@@ -76,28 +76,34 @@
         }
 
         // Check for reminder link click logic
+        document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('check_reminder')) {
             const lastTrigger = localStorage.getItem(STORAGE_KEY);
             if (lastTrigger) {
-                const cooldown = 24 * 60 * 60 * 1000;
-                const triggerTime = parseInt(lastTrigger) - cooldown; // Approximate trigger time
+            const cooldown = 24 * 60 * 60 * 1000;
+            const triggerTime = parseInt(lastTrigger); // store Date.now() directly, no math needed
 
-                // Find the most recent note timestamp and URL from the page
-                const firstNote = document.querySelector('.recent-note-item');
-                const latestModified = firstNote ? parseInt(firstNote.getAttribute('data-timestamp')) * 1000 : 0;
-                const latestUrl = firstNote ? firstNote.querySelector('a').getAttribute('href') : null;
+            const firstNote = document.querySelector('.recent-note-item');
+            const latestModified = firstNote
+                ? parseInt(firstNote.getAttribute('data-timestamp')) * 1000
+                : 0;
+            const latestUrl = firstNote
+                ? firstNote.querySelector('a').getAttribute('href')
+                : null;
 
-                if (latestModified > triggerTime) {
-                    showToast("We've found a new room, check it out!", "success", latestUrl);
-                } else {
-                    showToast("This guy's never going to make it out with indolence like this", "error");
-                }
+            console.log({ lastTrigger, triggerTime, latestModified, firstNote, latestUrl });
 
-                // Clean up URL
-                window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+            if (latestModified > triggerTime) {
+                showToast("We've found a new room, check it out!", "success", latestUrl);
+            } else {
+                showToast("This guy's never going to make it out with indolence like this", "error");
+            }
+
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
             }
         }
+        });
 
         // ... existing check on load ...
         const cachedNext = localStorage.getItem(STORAGE_KEY);

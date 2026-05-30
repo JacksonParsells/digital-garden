@@ -108,6 +108,14 @@ nav {
   margin: 1em 0 3em;
 }
 
+img, iframe, video {
+  max-width: 100%;
+  height: auto;
+  border-radius: $border-radius;
+  display: block;
+  margin: 1.5em auto;
+}
+
 #notes-entry-container {
   display: grid;
   grid-gap: 2em;
@@ -119,6 +127,26 @@ nav {
     grid-template-columns: 3fr 1fr;
     grid-template-areas: "content side";
   }
+
+  content {
+    grid-area: content;
+    min-width: 0; // Fixes grid overflow
+  }
+
+  side {
+    grid-area: side;
+  }
+}
+
+.wrapper {
+  margin: 0 auto;
+  max-width: 63em;
+}
+
+time {
+  display: block;
+  color: #6b7280;
+  margin: 0.5em 0 1em;
 }
 
 .backlink-box {
@@ -136,20 +164,28 @@ nav {
 }
 
 code {
-  background: #1e1e24;
+  background: #000000 !important;
   color: #fbbf24;
   padding: 0.2em 0.4em;
   border-radius: 4px;
   font-size: 0.9em;
-  border: 1px solid rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.2);
 }
 
-pre {
-  background: #0d0d0f;
+pre, .highlight {
+  background: #000000 !important;
+  color: #fbbf24;
   padding: 1.5em;
   border-radius: $border-radius;
-  border: 1px solid $color-border;
+  border: 1px solid rgba(251, 191, 36, 0.2);
   overflow-x: auto;
+  margin: 1em 0;
+}
+
+.highlight code {
+  background: transparent !important;
+  padding: 0;
+  border: none;
 }
 
 .invalid-link {

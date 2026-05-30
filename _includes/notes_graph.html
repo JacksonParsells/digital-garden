@@ -29,290 +29,395 @@
 
   #graph-wrapper {
     background: transparent;
-    height: 400px;
-    cursor: grab;
+    position: relative;
   }
 
-  #graph-wrapper:active {
-    cursor: grabbing;
-  }
-  
   #graph-wrapper > svg {
     max-width: 100%;
     display: block;
     border-radius: 12px;
   }
+
+  #graph-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 0.85em;
+    color: #555;
+  }
+
+  #depth-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  #depth-control input[type=range] {
+    width: 80px;
+  }
+
+  #graph-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  #graph-buttons button {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 2px 8px;
+    cursor: pointer;
+    font-size: 0.8em;
+    color: #555;
+  }
+
+  #graph-buttons button:hover {
+    background: #f0f0f0;
+  }
+
+  /* Full graph modal */
+  #full-graph-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #full-graph-overlay.active {
+    display: flex;
+  }
+
+  #full-graph-modal {
+    background: white;
+    border-radius: 12px;
+    width: 90vw;
+    height: 85vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #full-graph-close {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    font-size: 1.4em;
+    cursor: pointer;
+    z-index: 10;
+    color: #555;
+    line-height: 1;
+  }
+
+  #full-graph-close:hover { color: #000; }
+
+  #full-graph-svg {
+    width: 100%;
+    height: 100%;
+  }
 </style>
 
 <div id="graph-wrapper">
-  <script>
-    window.addEventListener("load", loadGraph);
+  <div id="graph-controls">
+    <div id="depth-control">
+      <label for="graph-depth-input">Depth</label>
+      <input type="range" id="graph-depth-input" min="1" max="3" step="1" value="1" />
+      <span id="depth-display">1</span>
+    </div>
+    <div id="graph-buttons">
+      <button id="full-graph-btn">&#127760;</button>
+      <button id="fs-btn">&#x26F6;</button>
+    </div>
+  </div>
+  <!-- Local graph -->
+  <svg id="local-graph-svg" width="100%" height="350"></svg>
+</div>
 
-    function loadGraph() {
-      var oScript = document.createElement("script");
-      oScript.src = "https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js";
-      oScript.crossOrigin = 'anonymous';
-      oScript.integrity =
-        "sha512-FHsFVKQ/T1KWJDGSbrUhTJyS1ph3eRrxI228ND0EGaEp6v4a/vGwPWd3Dtd/+9cI7ccofZvl/wulICEurHN1pg==";
-      document.body.appendChild(oScript);
-      oScript.onload = () => {
-        const MINIMAL_NODE_SIZE = 8;
-        const MAX_NODE_SIZE = 12;
-        const ACTIVE_RADIUS_FACTOR = 1.5;
-        const STROKE = 1;
-        const FONT_SIZE = 12;
-        const TICKS = 200;
-        const FONT_BASELINE = 40;
-        const MAX_LABEL_LENGTH = 50;
+<!-- Full graph modal -->
+<div id="full-graph-overlay">
+  <div id="full-graph-modal">
+    <span id="full-graph-close">&#x2715;</span>
+    <svg id="full-graph-svg"></svg>
+  </div>
+</div>
 
-        const graphData = {% include notes_graph.json %}
-        let nodesData = graphData.nodes;
-        let linksData = graphData.edges;
+<script>
+  window.addEventListener("load", function () {
+    var oScript = document.createElement("script");
+    oScript.src = "https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js";
+    oScript.crossOrigin = 'anonymous';
+    oScript.integrity = "sha512-FHsFVKQ/T1KWJDGSbrUhTJyS1ph3eRrxI228ND0EGaEp6v4a/vGwPWd3Dtd/+9cI7ccofZvl/wulICEurHN1pg==";
+    document.body.appendChild(oScript);
+    oScript.onload = function () {
 
-        const nodeSize = {};
+      var FONT_SIZE = 12;
+      var TICKS = 200;
+      var FONT_BASELINE = 40;
+      var MAX_LABEL_LENGTH = 50;
+      var STROKE = 1;
+      var MINIMAL_NODE_SIZE = 8;
+      var MAX_NODE_SIZE = 12;
+      var ACTIVE_RADIUS_FACTOR = 1.5;
 
-        const updateNodeSize = () => {
-          nodesData.forEach((el) => {
-            let weight =
-              3 *
-              Math.sqrt(
-                linksData.filter((l) => l.source.id === el.id || l.target.id === el.id)
-                  .length + 1
-              );
-            if (weight < MINIMAL_NODE_SIZE) {
-              weight = MINIMAL_NODE_SIZE;
-            } else if (weight > MAX_NODE_SIZE) {
-              weight = MAX_NODE_SIZE;
+      var rawData = {% include notes_graph.json %};
+
+      // Build neighbor map from edges
+      function buildNeighbors(nodes, edges) {
+        var neighborMap = {};
+        nodes.forEach(function (n) { neighborMap[n.id] = new Set(); });
+        edges.forEach(function (e) {
+          var sid = typeof e.source === 'object' ? e.source.id : e.source;
+          var tid = typeof e.target === 'object' ? e.target.id : e.target;
+          if (neighborMap[sid]) neighborMap[sid].add(tid);
+          if (neighborMap[tid]) neighborMap[tid].add(sid);
+        });
+        return neighborMap;
+      }
+
+      // Filter to N-depth neighbourhood of current page
+      function filterByDepth(allNodes, allEdges, depth) {
+        var currentPath = decodeURIComponent(window.location.pathname);
+        var currentNode = allNodes.find(function (n) {
+          return currentPath.includes(n.path) || currentPath === n.path;
+        });
+        if (!currentNode) currentNode = allNodes[0];
+
+        var neighborMap = buildNeighbors(allNodes, allEdges);
+        var included = new Set([currentNode.id]);
+
+        for (var i = 0; i < depth; i++) {
+          var toAdd = [];
+          included.forEach(function (id) {
+            if (neighborMap[id]) {
+              neighborMap[id].forEach(function (nid) { toAdd.push(nid); });
             }
-            nodeSize[el.id] = weight;
           });
+          toAdd.forEach(function (id) { included.add(id); });
+        }
+
+        var nodes = allNodes.filter(function (n) { return included.has(n.id); });
+        var nodeIds = new Set(nodes.map(function (n) { return n.id; }));
+        var edges = allEdges.filter(function (e) {
+          var sid = typeof e.source === 'object' ? e.source.id : e.source;
+          var tid = typeof e.target === 'object' ? e.target.id : e.target;
+          return nodeIds.has(sid) && nodeIds.has(tid);
+        });
+
+        // Deep copy so d3 simulation doesn't mutate originals
+        return {
+          nodes: nodes.map(function (n) { return Object.assign({}, n, { current: n.id === currentNode.id }); }),
+          edges: edges.map(function (e) { return Object.assign({}, e); }),
         };
+      }
 
-        const onClick = (d) => {
-          window.location = d.path
-        };
+      function nodeSize(id, edgesData) {
+        var count = edgesData.filter(function (e) {
+          var sid = typeof e.source === 'object' ? e.source.id : e.source;
+          var tid = typeof e.target === 'object' ? e.target.id : e.target;
+          return sid === id || tid === id;
+        }).length;
+        var w = 3 * Math.sqrt(count + 1);
+        return Math.min(MAX_NODE_SIZE, Math.max(w, MINIMAL_NODE_SIZE));
+      }
 
-        const onMouseover = function (d) {
-          const relatedNodesSet = new Set();
-          linksData
-            .filter((n) => n.target.id == d.id || n.source.id == d.id)
-            .forEach((n) => {
-              relatedNodesSet.add(n.target.id);
-              relatedNodesSet.add(n.source.id);
-            });
+      function shorten(str, maxLen) {
+        if (str.length <= maxLen) return str;
+        return str.substr(0, str.lastIndexOf(' ', maxLen)) + '...';
+      }
 
-          node.attr("class", (node_d) => {
-            if (node_d.id !== d.id && !relatedNodesSet.has(node_d.id)) {
-              return "inactive";
-            }
-            return "";
-          });
+      function isCurrentPath(path) {
+        return window.location.pathname.includes(path);
+      }
 
-          link.attr("class", (link_d) => {
-            if (link_d.source.id !== d.id && link_d.target.id !== d.id) {
-              return "inactive";
-            }
-            return "";
-          });
+      function renderGraph(svgEl, nodesData, edgesData, onReady) {
+        var svg = d3.select(svgEl);
+        svg.selectAll("*").remove();
 
-          link.attr("stroke-width", (link_d) => {
-            if (link_d.source.id === d.id || link_d.target.id === d.id) {
-              return STROKE * 4;
-            }
-            return STROKE;
-          });
-          text.attr("class", (text_d) => {
-            if (text_d.id !== d.id && !relatedNodesSet.has(text_d.id)) {
-              return "inactive";
-            }
-            return "";
-          });
-        };
+        var width = svgEl.getBoundingClientRect().width || 600;
+        var height = svgEl.getBoundingClientRect().height || 350;
+        svg.attr("width", width).attr("height", height);
 
-        const onMouseout = function (d) {
-          node.attr("class", "");
-          link.attr("class", "");
-          text.attr("class", "");
-          link.attr("stroke-width", STROKE);
-        };
+        var neighborMap = buildNeighbors(nodesData, edgesData);
+        var nodeSizeMap = {};
+        nodesData.forEach(function (n) { nodeSizeMap[n.id] = nodeSize(n.id, edgesData); });
 
-        const sameNodes = (previous, next) => {
-          if (next.length !== previous.length) {
-            return false;
-          }
-
-          const map = new Map();
-          for (const node of previous) {
-            map.set(node.id, node.label);
-          }
-
-          for (const node of next) {
-            const found = map.get(node.id);
-            if (!found || found !== node.title) {
-              return false;
-            }
-          }
-
-          return true;
-        };
-
-        const sameEdges = (previous, next) => {
-          if (next.length !== previous.length) {
-            return false;
-          }
-
-          const set = new Set();
-          for (const edge of previous) {
-            set.add(`${edge.source.id}-${edge.target.id}`);
-          }
-
-          for (const edge of next) {
-            if (!set.has(`${edge.source.id}-${edge.target.id}`)) {
-              return false;
-            }
-          }
-
-          return true;
-        };
-
-        const graphWrapper = document.getElementById('graph-wrapper')
-        const element = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        const wrapperWidth = graphWrapper.getBoundingClientRect().width;
-        element.setAttribute("width", wrapperWidth);
-        element.setAttribute("height", 400);
-        graphWrapper.appendChild(element);
-
-        const reportWindowSize = () => {
-          const newWidth = graphWrapper.getBoundingClientRect().width;
-          element.setAttribute("width", newWidth);
-          element.setAttribute("height", 400);
-        };
-
-        window.onresize = reportWindowSize;
-
-        const svg = d3.select("svg");
-        const width = Number(svg.attr("width"));
-        const height = Number(svg.attr("height"));
-        let zoomLevel = 1;
-
-        const simulation = d3
-          .forceSimulation(nodesData)
+        var simulation = d3.forceSimulation(nodesData)
           .force("forceX", d3.forceX().x(width / 2))
           .force("forceY", d3.forceY().y(height / 2))
           .force("charge", d3.forceManyBody())
-          .force(
-            "link",
-            d3
-              .forceLink(linksData)
-              .id((d) => d.id)
-              .distance(70)
-          )
+          .force("link", d3.forceLink(edgesData).id(function (d) { return d.id; }).distance(70))
           .force("center", d3.forceCenter(width / 2, height / 2))
           .force("collision", d3.forceCollide().radius(80))
           .stop();
 
-        const g = svg.append("g");
-        let link = g.append("g").attr("class", "links").selectAll(".link");
-        let node = g.append("g").attr("class", "nodes").selectAll(".node");
-        let text = g.append("g").attr("class", "text").selectAll(".text");
+        var g = svg.append("g");
+        var zoomLevel = 1;
 
-        const resize = () => {
+        var link = g.append("g").attr("class", "links")
+          .selectAll("line")
+          .data(edgesData)
+          .enter().append("line")
+          .attr("stroke-width", STROKE);
+
+        var node = g.append("g").attr("class", "nodes")
+          .selectAll("circle")
+          .data(nodesData)
+          .enter().append("circle")
+          .attr("r", function (d) { return nodeSizeMap[d.id]; })
+          .attr("active", function (d) { return isCurrentPath(d.path) ? true : null; })
+          .on("click", function (d) { window.location = d.path; })
+          .on("mouseover", function (d) {
+            var related = new Set([d.id]);
+            if (neighborMap[d.id]) neighborMap[d.id].forEach(function (n) { related.add(n); });
+            node.attr("class", function (nd) { return related.has(nd.id) ? "" : "inactive"; });
+            link.attr("class", function (l) {
+              var sid = typeof l.source === 'object' ? l.source.id : l.source;
+              var tid = typeof l.target === 'object' ? l.target.id : l.target;
+              return (sid === d.id || tid === d.id) ? "" : "inactive";
+            }).attr("stroke-width", function (l) {
+              var sid = typeof l.source === 'object' ? l.source.id : l.source;
+              var tid = typeof l.target === 'object' ? l.target.id : l.target;
+              return (sid === d.id || tid === d.id) ? STROKE * 4 : STROKE;
+            });
+            text.attr("class", function (td) { return related.has(td.id) ? "" : "inactive"; });
+          })
+          .on("mouseout", function () {
+            node.attr("class", "");
+            link.attr("class", "").attr("stroke-width", STROKE);
+            text.attr("class", "");
+          })
+          .call(d3.drag()
+            .on("start", function (d) {
+              if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+              d.fx = d.x; d.fy = d.y;
+            })
+            .on("drag", function (d) { d.fx = d3.event.x; d.fy = d3.event.y; })
+            .on("end", function (d) {
+              if (!d3.event.active) simulation.alphaTarget(0);
+              d.fx = null; d.fy = null;
+            }));
+
+        // Current node ring
+        node.each(function (d) {
+          if (d.current) {
+            d3.select(this.parentNode).append("circle")
+              .datum(d)
+              .attr("r", nodeSizeMap[d.id] + 3)
+              .attr("fill", "none")
+              .attr("stroke", "#8b88e6")
+              .attr("stroke-width", 1.5)
+              .attr("pointer-events", "none")
+              .attr("class", "current-ring");
+          }
+        });
+
+        var text = g.append("g").attr("class", "text")
+          .selectAll("text")
+          .data(nodesData)
+          .enter().append("text")
+          .text(function (d) { return shorten((d.label || '').replace(/_*/g, ""), MAX_LABEL_LENGTH); })
+          .attr("font-size", FONT_SIZE + "px")
+          .attr("text-anchor", "middle")
+          .attr("alignment-baseline", "central")
+          .attr("active", function (d) { return isCurrentPath(d.path) ? true : null; })
+          .on("click", function (d) { window.location = d.path; })
+          .on("mouseover", function (d) { node.dispatch("mouseover", { detail: d, bubbles: true }); })
+          .on("mouseout", function () { node.dispatch("mouseout"); });
+
+        var resize = function () {
           if (d3.event) {
-            const scale = d3.event.transform;
+            var scale = d3.event.transform;
             zoomLevel = scale.k;
             g.attr("transform", scale);
           }
-
-          const zoomOrKeep = (value) => (zoomLevel >= 1 ? value / zoomLevel : value);
-
-          const font = Math.max(Math.round(zoomOrKeep(FONT_SIZE)), 1);
-
-          text.attr("font-size", (d) => font);
-          text.attr("y", (d) => d.y - zoomOrKeep(FONT_BASELINE) + 8);
-          link.attr("stroke-width", zoomOrKeep(STROKE));
-          node.attr("r", (d) => {
-            return zoomOrKeep(nodeSize[d.id]);
-          });
-          svg
-            .selectAll("circle")
-            .filter((_d, i, nodes) => d3.select(nodes[i]).attr("active"))
-            .attr("r", (d) => zoomOrKeep(ACTIVE_RADIUS_FACTOR * nodeSize[d.id]));
+          var zok = function (v) { return zoomLevel >= 1 ? v / zoomLevel : v; };
+          text.attr("font-size", Math.max(Math.round(zok(FONT_SIZE)), 1));
+          text.attr("y", function (d) { return d.y - zok(FONT_BASELINE) + 8; });
+          link.attr("stroke-width", zok(STROKE));
+          node.attr("r", function (d) { return zok(nodeSizeMap[d.id]); });
+          svg.selectAll("circle.current-ring").attr("r", function (d) { return zok(nodeSizeMap[d.id] + 3); });
         };
 
-        const ticked = () => {
-          node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
-          text
-            .attr("x", (d) => d.x)
-            .attr("y", (d) => d.y - (FONT_BASELINE - nodeSize[d.id]) / zoomLevel);
+        var ticked = function () {
+          node.attr("cx", function (d) { return d.x; }).attr("cy", function (d) { return d.y; });
+          svg.selectAll("circle.current-ring")
+            .attr("cx", function (d) { return d.x; })
+            .attr("cy", function (d) { return d.y; });
+          text.attr("x", function (d) { return d.x; })
+            .attr("y", function (d) { return d.y - (FONT_BASELINE - nodeSizeMap[d.id]) / zoomLevel; });
           link
-            .attr("x1", (d) => d.source.x)
-            .attr("y1", (d) => d.source.y)
-            .attr("x2", (d) => d.target.x)
-            .attr("y2", (d) => d.target.y);
+            .attr("x1", function (d) { return d.source.x; })
+            .attr("y1", function (d) { return d.source.y; })
+            .attr("x2", function (d) { return d.target.x; })
+            .attr("y2", function (d) { return d.target.y; });
         };
 
-        const restart = () => {
-          updateNodeSize();
-          node = node.data(nodesData, (d) => d.id);
-          node.exit().remove();
-          node = node
-            .enter()
-            .append("circle")
-            .attr("r", (d) => {
-              return nodeSize[d.id];
-            })
-            .on("click", onClick)
-            .on("mouseover", onMouseover)
-            .on("mouseout", onMouseout)
-            .merge(node);
-
-          link = link.data(linksData, (d) => `${d.source.id}-${d.target.id}`);
-          link.exit().remove();
-          link = link.enter().append("line").attr("stroke-width", STROKE).merge(link);
-
-          text = text.data(nodesData, (d) => d.label);
-          text.exit().remove();
-          text = text
-            .enter()
-            .append("text")
-            .text((d) => shorten(d.label.replace(/_*/g, ""), MAX_LABEL_LENGTH))
-            .attr("font-size", `${FONT_SIZE}px`)
-            .attr("text-anchor", "middle")
-            .attr("alignment-baseline", "central")
-            .on("click", onClick)
-            .on("mouseover", onMouseover)
-            .on("mouseout", onMouseout)
-            .merge(text);
-
-          node.attr("active", (d) => isCurrentPath(d.path) ? true : null);
-          text.attr("active", (d) => isCurrentPath(d.path) ? true : null);
-
-          simulation.nodes(nodesData);
-          simulation.force("link").links(linksData);
-          simulation.alpha(1).restart();
-          simulation.stop();
-
-          for (let i = 0; i < TICKS; i++) {
-            simulation.tick();
-          }
-
-          ticked();
-        };
-
-        const zoomHandler = d3.zoom().scaleExtent([0.2, 3]).on("zoom", resize);
-
+        var zoomHandler = d3.zoom().scaleExtent([0.2, 3]).on("zoom", resize);
         zoomHandler(svg);
-        restart();
 
-        function isCurrentPath(notePath) {
-          return window.location.pathname.includes(notePath)
-        }
+        for (var i = 0; i < TICKS; i++) { simulation.tick(); }
+        ticked();
 
-        function shorten(str, maxLen, separator = ' ') {
-          if (str.length <= maxLen) return str;
-          return str.substr(0, str.lastIndexOf(separator, maxLen)) + '...';
-        }
+        if (onReady) onReady(simulation, svg, zoomHandler, width, height);
+        return { simulation: simulation, node: node, link: link, text: text };
       }
-    }
-  </script>
-</div>
+
+      // --- Local graph ---
+      var currentDepth = 1;
+      var localSvgEl = document.getElementById("local-graph-svg");
+
+      function redrawLocal() {
+        var filtered = filterByDepth(rawData.nodes, rawData.edges, currentDepth);
+        renderGraph(localSvgEl, filtered.nodes, filtered.edges, null);
+      }
+
+      redrawLocal();
+
+      // Depth slider
+      var depthInput = document.getElementById("graph-depth-input");
+      var depthDisplay = document.getElementById("depth-display");
+      depthInput.addEventListener("input", function () {
+        currentDepth = parseInt(this.value);
+        depthDisplay.textContent = currentDepth;
+        redrawLocal();
+      });
+
+      // Fullscreen toggle
+      var isFullscreen = false;
+      document.getElementById("fs-btn").addEventListener("click", function () {
+        isFullscreen = !isFullscreen;
+        localSvgEl.setAttribute("height", isFullscreen ? "80vh" : "350");
+        this.textContent = isFullscreen ? "⛶" : "⛶";
+        redrawLocal();
+      });
+
+      // Full graph modal
+      var fullGraphOverlay = document.getElementById("full-graph-overlay");
+      var fullGraphSvgEl = document.getElementById("full-graph-svg");
+
+      document.getElementById("full-graph-btn").addEventListener("click", function () {
+        fullGraphOverlay.classList.add("active");
+        setTimeout(function () {
+          renderGraph(fullGraphSvgEl, rawData.nodes.map(function(n){ return Object.assign({},n); }), rawData.edges.map(function(e){ return Object.assign({},e); }), function (sim, svg, zoom, w, h) {
+            // zoom to fit after settling
+            setTimeout(function () {
+              svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity.translate(w * 0.05, h * 0.05).scale(0.9));
+            }, 100);
+          });
+        }, 50);
+      });
+
+      document.getElementById("full-graph-close").addEventListener("click", function () {
+        fullGraphOverlay.classList.remove("active");
+        d3.select(fullGraphSvgEl).selectAll("*").remove();
+      });
+
+      // Resize local graph on window resize
+      window.addEventListener("resize", function () {
+        redrawLocal();
+      });
+    };
+  });
+</script>

@@ -25,6 +25,7 @@
     .garden-toast.show {
         transform: translateX(-50%) translateY(0);
         opacity: 1;
+        pointer-events: auto;
     }
 
     .garden-toast.success {
@@ -56,10 +57,16 @@
         }
 
         // Toast functionality
-        function showToast(message, type) {
+        function showToast(message, type, linkUrl) {
             const toast = document.createElement('div');
             toast.className = `garden-toast ${type}`;
-            toast.innerText = message;
+            
+            if (type === 'success' && linkUrl) {
+              toast.innerHTML = `${message.replace('check it out', `<a href="${linkUrl}" style="color: white; text-decoration: underline;">check it out</a>`)}`;
+            } else {
+              toast.innerText = message;
+            }
+
             document.body.appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 10);
             setTimeout(() => {
@@ -76,14 +83,15 @@
                 const cooldown = 24 * 60 * 60 * 1000;
                 const triggerTime = parseInt(lastTrigger) - cooldown; // Approximate trigger time
 
-                // Find the most recent note timestamp from the page
+                // Find the most recent note timestamp and URL from the page
                 const firstNote = document.querySelector('.recent-note-item');
                 const latestModified = firstNote ? parseInt(firstNote.getAttribute('data-timestamp')) * 1000 : 0;
+                const latestUrl = firstNote ? firstNote.querySelector('a').getAttribute('href') : null;
 
                 if (latestModified > triggerTime) {
-                    showToast("A new room discovered! 🕯️ You've found your way back to writing.", "success");
+                    showToast("We've found a new room, check it out!", "success", latestUrl);
                 } else {
-                    showToast("You're still lost and confused in the dark... the cave walls remain cold.", "error");
+                    showToast("This guy's never going to make it out with indolence like this", "error");
                 }
 
                 // Clean up URL

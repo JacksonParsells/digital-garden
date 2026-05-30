@@ -15,7 +15,7 @@ This digital garden template is free, open-source, and [available on GitHub here
 
 The easiest way to get started is to read this [step-by-step guide explaining how to set this up from scratch](https://maximevaillancourt.com/blog/setting-up-your-own-digital-garden-with-jekyll).
 
-<strong>Recently updated notes</strong>
+<strong id="recently-updated-notes">Recently updated notes</strong>
 
 <ul>
   {% assign recent_notes = site.notes | sort: "last_modified_at_timestamp" | reverse %}

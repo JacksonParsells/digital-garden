@@ -14,11 +14,12 @@ layout: default
   <div id="notes-entry-container">
     <content>
       {{ content }}
-      <p>This line appears after every note.</p>
+      <hr>
+      <p>Don't stop now, you're almost out of the cave!</p>
     </content>
 
     <side style="font-size: 0.9em">
-      <h3 style="margin-bottom: 1em">Notes mentioning this note</h3>
+      <h3 style="margin-bottom: 1em">Rooms in the cave you can walk to</h3>
       {% if page.backlinks.size > 0 %}
       <div style="display: grid; grid-gap: 1em; grid-template-columns: repeat(1fr);">
       {% for backlink in page.backlinks %}
@@ -32,7 +33,7 @@ layout: default
 
       <div style="font-size: 0.9em">
         <p>
-          There are no notes linking to this note.
+          You've managed to find a lonely room in the cave... spooky!
         </p>
       </div>
       {% endif %}
@@ -40,8 +41,6 @@ layout: default
   </div>
 </article>
 
-<hr>
-
-<p>Here are all the notes in this garden, along with their links, visualized as a graph.</p>
+<p>Here's the current map of the cave, have fun exploring</p>
 
 {% include notes_graph.html %}

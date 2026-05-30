@@ -1,1 +1,53 @@
-This is the footer. Include anything you'd like here, like a link to an <a class="internal-link" href="{{ site.baseurl }}/about">About</a> page.
+<a class="internal-link" href="{{ site.baseurl }}/about">About me!</a> | 
+<span id="reminder-container">
+  <a href="#" id="remind-link">remind me to write something</a>
+</span>
+
+<script>
+  (function() {
+    const container = document.getElementById('reminder-container');
+    const link = document.getElementById('remind-link');
+    const STORAGE_KEY = 'last_reminder_timestamp';
+
+    function updateUI(nextAvailable) {
+      const now = Date.now();
+      if (nextAvailable > now) {
+        const hoursLeft = Math.ceil((nextAvailable - now) / (1000 * 60 * 60));
+        container.innerHTML = `
+          <a class="internal-link" href="{{ site.baseurl }}/#recently-updated-notes">Check if the reminder to write worked...</a> 
+          you can remind me again in: ${hoursLeft} hour${hoursLeft === 1 ? '' : 's'}
+        `;
+      }
+    }
+
+    // Check on load
+    const cachedNext = localStorage.getItem(STORAGE_KEY);
+    if (cachedNext) {
+      updateUI(parseInt(cachedNext));
+    }
+
+    link.addEventListener('click', async (e) => {
+      e.preventDefault();
+      link.innerText = 'Sending...';
+      link.style.pointerEvents = 'none';
+
+      try {
+        const res = await fetch('/.netlify/functions/remind', { method: 'POST' });
+        const data = await res.json();
+
+        if (res.ok || data.nextAvailable) {
+          localStorage.setItem(STORAGE_KEY, data.nextAvailable);
+          updateUI(data.nextAvailable);
+        } else {
+          alert(data.error || 'Something went wrong. Please try again later.');
+          link.innerText = 'remind me to write something';
+          link.style.pointerEvents = 'auto';
+        }
+      } catch (err) {
+        console.error(err);
+        link.innerText = 'remind me to write something';
+        link.style.pointerEvents = 'auto';
+      }
+    });
+  })();
+</script>

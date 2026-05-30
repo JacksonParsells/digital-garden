@@ -1,53 +1,126 @@
-<a class="internal-link" href="{{ site.baseurl }}/about">About me!</a> | 
+<a class="internal-link" href="{{ site.baseurl }}/about">About me!</a> |
 <span id="reminder-container">
-  <a href="#" id="remind-link">remind me to write something</a>
+    <a href="#" id="remind-link">remind me to write something</a>
 </span>
 
-<script>
-  (function() {
-    const container = document.getElementById('reminder-container');
-    const link = document.getElementById('remind-link');
-    const STORAGE_KEY = 'last_reminder_timestamp';
+<style>
+    .garden-toast {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100%);
+        padding: 12px 24px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 9999;
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+        opacity: 0;
+        pointer-events: none;
+        text-align: center;
+        min-width: 300px;
+    }
 
-    function updateUI(nextAvailable) {
-      const now = Date.now();
-      if (nextAvailable > now) {
-        const hoursLeft = Math.ceil((nextAvailable - now) / (1000 * 60 * 60));
-        container.innerHTML = `
-          <a class="internal-link" href="{{ site.baseurl }}/#recently-updated-notes">Check if the reminder to write worked...</a> 
+    .garden-toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+
+    .garden-toast.success {
+        background: #2ecc71;
+        border-bottom: 3px solid #27ae60;
+    }
+
+    .garden-toast.error {
+        background: #e74c3c;
+        border-bottom: 3px solid #c0392b;
+    }
+</style>
+
+<script>
+    (function () {
+        const container = document.getElementById('reminder-container');
+        const link = document.getElementById('remind-link');
+        const STORAGE_KEY = 'last_reminder_timestamp';
+
+        function updateUI(nextAvailable) {
+            const now = Date.now();
+            if (nextAvailable > now) {
+                const hoursLeft = Math.ceil((nextAvailable - now) / (1000 * 60 * 60));
+                container.innerHTML = `
+          <a class="internal-link" href="{{ site.baseurl }}/?check_reminder=1#recently-updated-notes">Check if the reminder to write worked...</a> 
           you can remind me again in: ${hoursLeft} hour${hoursLeft === 1 ? '' : 's'}
         `;
-      }
-    }
-
-    // Check on load
-    const cachedNext = localStorage.getItem(STORAGE_KEY);
-    if (cachedNext) {
-      updateUI(parseInt(cachedNext));
-    }
-
-    link.addEventListener('click', async (e) => {
-      e.preventDefault();
-      link.innerText = 'Sending...';
-      link.style.pointerEvents = 'none';
-
-      try {
-        const res = await fetch('/.netlify/functions/remind', { method: 'POST' });
-        const data = await res.json();
-
-        if (res.ok || data.nextAvailable) {
-          localStorage.setItem(STORAGE_KEY, data.nextAvailable);
-          updateUI(data.nextAvailable);
-        } else {
-          alert(data.error || 'Something went wrong. Please try again later.');
-          link.innerText = 'remind me to write something';
-          link.style.pointerEvents = 'auto';
+            }
         }
-      } catch (err) {
-        console.error(err);
-        link.innerText = 'remind me to write something';
-        link.style.pointerEvents = 'auto';
-      }
-    });
-  })();
+
+        // Toast functionality
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `garden-toast ${type}`;
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 500);
+            }, 5000);
+        }
+
+        // Check for reminder link click logic
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('check_reminder')) {
+            const lastTrigger = localStorage.getItem(STORAGE_KEY);
+            if (lastTrigger) {
+                const cooldown = 24 * 60 * 60 * 1000;
+                const triggerTime = parseInt(lastTrigger) - cooldown; // Approximate trigger time
+
+                // Find the most recent note timestamp from the page
+                const firstNote = document.querySelector('.recent-note-item');
+                const latestModified = firstNote ? parseInt(firstNote.getAttribute('data-timestamp')) * 1000 : 0;
+
+                if (latestModified > triggerTime) {
+                    showToast("A new room discovered! 🕯️ You've found your way back to writing.", "success");
+                } else {
+                    showToast("You're still lost and confused in the dark... the cave walls remain cold.", "error");
+                }
+
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+            }
+        }
+
+        // ... existing check on load ...
+        const cachedNext = localStorage.getItem(STORAGE_KEY);
+        if (cachedNext) {
+            updateUI(parseInt(cachedNext));
+        }
+        // ... existing event listener ...
+
+
+        link.addEventListener('click', async (e) => {
+            e.preventDefault();
+            link.innerText = 'Sending...';
+            link.style.pointerEvents = 'none';
+
+            try {
+                const res = await fetch('/.netlify/functions/remind', { method: 'POST' });
+                const data = await res.json();
+
+                if (res.ok || data.nextAvailable) {
+                    localStorage.setItem(STORAGE_KEY, data.nextAvailable);
+                    updateUI(data.nextAvailable);
+                } else {
+                    alert(data.error || 'Something went wrong. Please try again later.');
+                    link.innerText = 'remind me to write something';
+                    link.style.pointerEvents = 'auto';
+                }
+            } catch (err) {
+                console.error(err);
+                link.innerText = 'remind me to write something';
+                link.style.pointerEvents = 'auto';
+            }
+        });
+    })();
 </script>
